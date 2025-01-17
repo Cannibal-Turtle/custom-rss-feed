@@ -55,7 +55,7 @@ def main():
     for (chapter_num, main_title, arc_title, entry) in chapter_entries:
         fe = fg.add_entry()
         fe.title(main_title)
-        fe.description(f"Chapter: {chapter_num}")
+        fe.description(f"Chapter {chapter_num}")
         fe.category(term=arc_title)
         fe.link(href=entry.link)
         if hasattr(entry, 'published'):
