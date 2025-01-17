@@ -9,11 +9,13 @@ def main():
     # Configure logging
     logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
 
-    original_feed_url = 'https://siftrss.com/f/eqw6xQQQK8q'
+    # Use the original dragonholic.com feed URL
+    original_feed_url = 'https://dragonholic.com/feed/manga-chapters/'
     parsed_feed = feedparser.parse(original_feed_url)
 
     # 1) Define regex patterns
     link_pattern = re.compile(r'/chapter-(\d+)/?$')
+    # Adjust the title pattern if needed based on the original feed's title structure
     title_pattern = re.compile(r'^(.*?)\s*[-–—]+\s*Chapter\s*(\d+)\s*[-–—]+\s*(.*)$')
 
     chapter_entries = []
@@ -25,6 +27,11 @@ def main():
         print(f"Link: {e.link}")
         print(f"Published: {e.published if hasattr(e, 'published') else 'No published date'}")
         print(f"GUID: {e.guid if hasattr(e, 'guid') else 'No GUID'}")
+
+        # Implement title filtering
+        if "Quick Transmigration: The Villain Is Too Pampered and Alluring" not in e.title:
+            logging.info(f"Skipping entry not matching title filter: {e.title}")
+            continue  # Skip entries that don't include the desired title
 
         link_match = link_pattern.search(e.link)
         title_match = title_pattern.match(e.title)
@@ -92,8 +99,8 @@ def main():
 
     # 7) Create RSS feed using PyRSS2Gen
     rss = PyRSS2Gen.RSS2(
-        title='Customized Quick Transmigration Feed',
-        link='https://cannibal-turtle.github.io/custom-rss-feed/custom_quick_transmigration_feed.xml',
+        title='Customized Feed',
+        link='https://cannibal-turtle.github.io/custom-rss-feed/custom_feed.xml',
         description='A customized RSS feed with separated title, chapter number, and arc title.',
         lastBuildDate=datetime.now(timezone.utc),
         items=rss_items
@@ -107,13 +114,12 @@ def main():
     pretty_xml_as_string = dom.toprettyxml(indent="  ", encoding="utf-8").decode('utf-8')
 
     # 10) Write the pretty-printed XML to file
-    output_file = 'custom_quick_transmigration_feed.xml'
+    output_file = 'custom_feed.xml'
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(pretty_xml_as_string)
 
     logging.info(f"\nSaved '{output_file}' successfully!")
-    logging.info("Open it with a code editor to confirm that the first <item> is your highest chapter (e.g., 158).")
+    logging.info("Open it with a code editor to confirm that the first <item> is your highest chapter (e.g., 159).")
 
 if __name__ == "__main__":
     main()
-
