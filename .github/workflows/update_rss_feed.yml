@@ -1,3 +1,5 @@
+# .github/workflows/update_rss_feed.yml
+
 name: Update RSS Feed
 
 # Define permissions for the workflow
@@ -36,7 +38,7 @@ jobs:
       # Step 4: Run the Python script to generate the RSS feed
       - name: Generate RSS Feed
         run: |
-          python scripts/custom_rss_feed.py
+          python scripts/custom_rss_feed.py  # Ensure this path is correct
 
       # Step 5: Configure Git for committing
       - name: Configure Git
@@ -44,7 +46,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Step 6: Commit and push changes if there are any
+      # Step 6: Commit and Push if Changed
       - name: Commit and Push if Changed
         run: |
           git add custom_quick_transmigration_feed.xml
@@ -54,3 +56,4 @@ jobs:
             git push origin main
           else
             echo "No changes to commit"
+          fi
