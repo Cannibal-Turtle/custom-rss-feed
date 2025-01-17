@@ -1,44 +1,42 @@
 name: Update RSS Feed
 
-# Trigger the workflow on a schedule and on manual dispatch
+permissions:
+  contents: write  # Grants write access to repository contents
+
 on:
   schedule:
-    - cron: '5 16 * * *'  # Runs at minute 0 of every hour (hourly)
-  workflow_dispatch:     # Allows manual trigger
+    - cron: '5 16 * * *'  # Runs daily at 16:05 UTC
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true
 
-      # Step 2: Set up Python
       - name: Set up Python 3.x
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'  # You can specify a version like '3.9'
+          python-version: '3.x'  # Specify a version like '3.9' if needed
 
-      # Step 3: Install dependencies
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Run the Python script to generate the RSS feed
       - name: Generate RSS Feed
         run: |
-          python scripts/custom_rss_feed.py
+          python custom_rss_feed.py  # Ensure this path is correct
 
-      # Step 5: Configure Git for committing
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Step 6: Commit and push changes if there are any
       - name: Commit and Push if Changed
         run: |
           git add custom_quick_transmigration_feed.xml
@@ -49,4 +47,5 @@ jobs:
           else
             echo "No changes to commit"
           fi
+
 
