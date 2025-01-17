@@ -2,9 +2,9 @@
 <rss version="2.0">
   <channel>
     <title>Customized Feed</title>
-    <link>https://cannibal-turtle.github.io/custom-rss-feed/custom_feed.xml</link>
+    <link>https://cannibal-turtle.github.io/custom-rss-feed/custom_quick_transmigration_feed.xml</link>
     <description>A customized RSS feed with separated title, chapter number, and arc title.</description>
-    <lastBuildDate>Fri, 17 Jan 2025 17:14:36 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 17 Jan 2025 17:31:21 GMT</lastBuildDate>
     <generator>PyRSS2Gen-1.1.0</generator>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <item>
