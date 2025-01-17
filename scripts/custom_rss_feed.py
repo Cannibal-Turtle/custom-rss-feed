@@ -100,7 +100,7 @@ def main():
     # 7) Create RSS feed using PyRSS2Gen
     rss = PyRSS2Gen.RSS2(
         title='Customized Feed',
-        link='https://cannibal-turtle.github.io/custom-rss-feed/custom_feed.xml',
+        link='https://cannibal-turtle.github.io/custom-rss-feed/custom_quick_transmigration_feed.xml',
         description='A customized RSS feed with separated title, chapter number, and arc title.',
         lastBuildDate=datetime.now(timezone.utc),
         items=rss_items
@@ -114,7 +114,7 @@ def main():
     pretty_xml_as_string = dom.toprettyxml(indent="  ", encoding="utf-8").decode('utf-8')
 
     # 10) Write the pretty-printed XML to file
-    output_file = 'custom_feed.xml'
+    output_file = 'custom_quick_transmigration_feed.xml'
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(pretty_xml_as_string)
 
