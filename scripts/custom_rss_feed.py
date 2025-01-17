@@ -1,74 +1,117 @@
 import feedparser
-from feedgen.feed import FeedGenerator
+import PyRSS2Gen
+from datetime import datetime, timezone
 import re
+import logging
+import xml.dom.minidom
 
 def main():
+    # Configure logging
+    logging.basicConfig(level=logging.DEBUG, format='%(levelname)s: %(message)s')
+
     original_feed_url = 'https://siftrss.com/f/eqw6xQQQK8q'
     parsed_feed = feedparser.parse(original_feed_url)
 
-    # 1) Build a list of (chapter_number_int, main_title, arc_title, entry).
-    #    This regex matches strings like:
-    #         "Quick Transmigration... - Chapter 158 - - The Disfigured..."
-    #    If your feed's title format changes, adjust the regex accordingly.
-    title_pattern = re.compile(r'^(.*?)\s*-\s*Chapter\s*(\d+)\s*-\s*-\s*(.*)$')
+    # 1) Define regex patterns
+    link_pattern = re.compile(r'/chapter-(\d+)/?$')
+    title_pattern = re.compile(r'^(.*?)\s*[-–—]+\s*Chapter\s*(\d+)\s*[-–—]+\s*(.*)$')
+
     chapter_entries = []
 
+    # 2) Extract chapter information from the original feed
     for e in parsed_feed.entries:
-        match = title_pattern.match(e.title)
-        if match:
-            main_title         = match.group(1).strip()
-            chapter_number_str = match.group(2).strip()
-            arc_title         = match.group(3).strip()
-            try:
-                chapter_number_int = int(chapter_number_str)
-            except ValueError:
-                chapter_number_int = 0
+        print(f"\nProcessing entry:")
+        print(f"Title: {e.title}")
+        print(f"Link: {e.link}")
+        print(f"Published: {e.published if hasattr(e, 'published') else 'No published date'}")
+        print(f"GUID: {e.guid if hasattr(e, 'guid') else 'No GUID'}")
+
+        link_match = link_pattern.search(e.link)
+        title_match = title_pattern.match(e.title)
+
+        if link_match and title_match:
+            chapter_number_int = int(link_match.group(1))
+            main_title = title_match.group(1).strip()
+            arc_title = title_match.group(3).strip()
+            logging.debug(f"Matched Entry: Chapter {chapter_number_int}, Title: {main_title}, Arc: {arc_title}")
         else:
-            # If the regex doesn't match, just store chapter=0 and arc=N/A
-            main_title         = e.title
-            chapter_number_int = 0
-            arc_title          = 'N/A'
-            # Uncomment to see which titles fail to match:
-            # print("NO MATCH:", e.title)
+            # Detailed debugging
+            if not link_match:
+                logging.warning(f"Link did not match for entry: {e.link}")
+            if not title_match:
+                logging.warning(f"Title did not match for entry: {e.title}")
+            continue  # Skip entries that don't match both patterns
 
         chapter_entries.append((chapter_number_int, main_title, arc_title, e))
 
-    # 2) Debug print the original feed order (as parsed).
-    print("Debug: Original Feed (as parsed by feedparser):")
-    for i, item in enumerate(parsed_feed.entries, start=1):
-        print(f"  {i:2d}. {item.title}")
+    if not chapter_entries:
+        logging.error("No valid chapters found. Exiting script.")
+        return
 
-    # 3) Sort by chapter_number_int descending (so highest = first).
-    chapter_entries.sort(key=lambda x: x[0], reverse=True)
+    # 3) Debug: Print original feed order
+    logging.info("Debug: Original Feed Order:")
+    for i, (ch_num, _, _, _) in enumerate(chapter_entries, start=1):
+        logging.info(f"  {i:2d}. Chapter {ch_num}")
 
-    print("\nDebug: After sorting by descending chapter_number_int:")
-    for ch_num, t_main, t_arc, entry_obj in chapter_entries:
-        print(f"  Chapter {ch_num} => {t_main}")
+    # 4) Sort chapters in descending order based on chapter number
+    sorted_chapter_entries = sorted(chapter_entries, key=lambda x: x[0], reverse=True)
 
-    # 4) Create the feed generator.
-    fg = FeedGenerator()
-    fg.title('Customized Quick Transmigration Feed')
-    fg.link(href='https://cannibal-turtle.github.io/custom-rss-feed/custom_quick_transmigration_feed.xml', rel='self')
-    fg.description('A customized RSS feed with separated title, chapter number, and arc title.')
+    # 5) Debug: Print sorted feed order
+    logging.info("\nDebug: Sorted Feed Order (Descending):")
+    for i, (ch_num, _, _, _) in enumerate(sorted_chapter_entries, start=1):
+        logging.info(f"  {i:2d}. Chapter {ch_num}")
 
-    # 5) Add items in the sorted order (largest chapter first => top of XML).
-    for (chapter_num, main_title, arc_title, entry) in chapter_entries:
-        fe = fg.add_entry()
-        fe.title(main_title)
-        fe.description(f"Chapter {chapter_num}")
-        fe.category(term=arc_title)
-        fe.link(href=entry.link)
-        if hasattr(entry, 'published'):
-            fe.pubDate(entry.published)
+    # 6) Create RSS items using PyRSS2Gen
+    rss_items = []
+    for (chapter_num, main_title, arc_title, entry) in sorted_chapter_entries:
+        logging.info(f"Adding Chapter {chapter_num} to feed")
 
-    # 6) Write out the RSS file.
-    new_feed_xml = fg.rss_str(pretty=True)
-    with open('custom_quick_transmigration_feed.xml', 'wb') as f:
-        f.write(new_feed_xml)
+        # Handle 'published' date
+        try:
+            pub_date_str = entry.published
+            pub_date = datetime.strptime(pub_date_str, '%a, %d %b %Y %H:%M:%S %z')
+        except (ValueError, AttributeError) as ex:
+            logging.warning(f"Failed to parse published date for entry: {entry.title}. Error: {ex}")
+            pub_date = datetime.now(timezone.utc)  # Use current time as fallback
 
-    print("\nSaved 'custom_quick_transmigration_feed.xml'!")
-    print("Open it with Notepad / VS Code (not WordPad) to confirm that")
-    print("the FIRST <item> is your highest chapter (e.g., 158).")
+        # Handle 'guid' and 'category'
+        guid_value = entry.guid if hasattr(entry, 'guid') else entry.link
+        category_value = arc_title if arc_title else 'N/A'
+
+        # Create RSSItem
+        rss_item = PyRSS2Gen.RSSItem(
+            title=main_title,
+            link=entry.link,
+            description=f"Chapter {chapter_num}",
+            guid=PyRSS2Gen.Guid(guid_value, isPermaLink=False),
+            categories=[category_value],
+            pubDate=pub_date
+        )
+        rss_items.append(rss_item)
+
+    # 7) Create RSS feed using PyRSS2Gen
+    rss = PyRSS2Gen.RSS2(
+        title='Customized Quick Transmigration Feed',
+        link='https://cannibal-turtle.github.io/custom-rss-feed/custom_quick_transmigration_feed.xml',
+        description='A customized RSS feed with separated title, chapter number, and arc title.',
+        lastBuildDate=datetime.now(timezone.utc),
+        items=rss_items
+    )
+
+    # 8) Generate XML string
+    rss_xml_str = rss.to_xml(encoding='utf-8')
+
+    # 9) Pretty-print the XML using xml.dom.minidom
+    dom = xml.dom.minidom.parseString(rss_xml_str)
+    pretty_xml_as_string = dom.toprettyxml(indent="  ", encoding="utf-8").decode('utf-8')
+
+    # 10) Write the pretty-printed XML to file
+    output_file = 'custom_quick_transmigration_feed.xml'
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(pretty_xml_as_string)
+
+    logging.info(f"\nSaved '{output_file}' successfully!")
+    logging.info("Open it with a code editor to confirm that the first <item> is your highest chapter (e.g., 158).")
 
 if __name__ == "__main__":
     main()
