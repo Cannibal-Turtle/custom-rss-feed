@@ -99,7 +99,7 @@ def main():
 
     # 7) Create RSS feed using PyRSS2Gen
     rss = PyRSS2Gen.RSS2(
-        title='Customized Feed',
+        title='TVITPA Feed',
         link='https://cannibal-turtle.github.io/custom-rss-feed/custom_quick_transmigration_feed.xml',
         description='A customized RSS feed with separated title, chapter number, and arc title.',
         lastBuildDate=datetime.now(timezone.utc),
