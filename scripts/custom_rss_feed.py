@@ -32,7 +32,8 @@ def main():
         if link_match and title_match:
             chapter_number_int = int(link_match.group(1))
             main_title = title_match.group(1).strip()
-            arc_title = title_match.group(3).strip()
+            # Remove leading hyphens and spaces from arc_title
+            arc_title = re.sub(r'^[-–—]+\s*', '', title_match.group(3).strip())
             logging.debug(f"Matched Entry: Chapter {chapter_number_int}, Title: {main_title}, Arc: {arc_title}")
         else:
             # Detailed debugging
@@ -115,3 +116,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
