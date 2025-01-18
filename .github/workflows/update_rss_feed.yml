@@ -2,32 +2,31 @@
 
 name: Update RSS Feed
 
-# Define permissions for the workflow
 permissions:
   contents: write  # Grants write access to repository contents
 
-# Trigger the workflow on a schedule and on manual dispatch
 on:
   schedule:
     - cron: '5 16 * * *'  # Runs daily at 16:05 UTC
-  workflow_dispatch:     # Allows manual trigger
+  workflow_dispatch:       # Allows manual trigger
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Step 1: Checkout the repository with full history
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          persist-credentials: true  # Ensures the token is available for commit and push
+          persist-credentials: true
+          fetch-depth: 0  # Fetch all history
 
-      # Step 2: Set up Python
-      - name: Set up Python 3.x
+      # Step 2: Set up Python 3.9
+      - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'  # Specify a version like '3.9' if needed
+          python-version: '3.9'
 
       # Step 3: Install dependencies
       - name: Install Dependencies
@@ -46,14 +45,29 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Step 6: Commit and Push if Changed
-      - name: Commit and Push if Changed
+      # Step 6: Pull the latest changes to avoid conflicts
+      - name: Pull Latest Changes with Rebase
+        run: |
+          git pull --rebase origin main
+
+      # Step 7: Add the updated XML file
+      - name: Add RSS Feed File
         run: |
           git add custom_quick_transmigration_feed.xml
-          # Check if there are changes to commit
-          if ! git diff --cached --quiet; then
-            git commit -m "Automated RSS feed update on $(date)"
-            git push origin main
+
+      # Step 8: Check if there are changes to commit
+      - name: Check for Changes
+        id: git-check
+        run: |
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_ENV
           else
-            echo "No changes to commit"
+            echo "changed=true" >> $GITHUB_ENV
           fi
+
+      # Step 9: Commit and Push if Changed
+      - name: Commit and Push if Changed
+        if: env.changed == 'true'
+        run: |
+          git commit -m "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
+          git push origin main
