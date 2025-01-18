@@ -19,8 +19,8 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          persist-credentials: true  # Ensures the token is available for commit and push
-          fetch-depth: 0            # Fetches the entire history
+          persist-credentials: false  # Disable default token usage
+          fetch-depth: 0              # Fetches the entire history
 
       # Step 2: Configure Git
       - name: Configure Git
