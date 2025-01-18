@@ -1,73 +1,54 @@
-# .github/workflows/update_rss_feed.yml
-
 name: Update RSS Feed
-
-permissions:
-  contents: write  # Grants write access to repository contents
 
 on:
   schedule:
-    - cron: '5 16 * * *'  # Runs daily at 16:05 UTC
-  workflow_dispatch:       # Allows manual trigger
+    - cron: '5 16 * * *'
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository with full history
-      - name: Checkout Repository
+      - name: Check out code
         uses: actions/checkout@v3
         with:
           persist-credentials: true
-          fetch-depth: 0  # Fetch all history
+          fetch-depth: 0
 
-      # Step 2: Set up Python 3.9
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      # Step 3: Install dependencies
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      # Step 4: Run the Python script to generate the RSS feed
-      - name: Generate RSS Feed
-        run: |
-          python scripts/custom_rss_feed.py  # Ensure this path is correct
-
-      # Step 5: Configure Git for committing
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Step 6: Pull the latest changes to avoid conflicts
-      - name: Pull Latest Changes with Rebase
+      # 1) Pull first to ensure we're up-to-date
+      - name: Pull latest changes with rebase
         run: |
           git pull --rebase origin main
 
-      # Step 7: Add the updated XML file
-      - name: Add RSS Feed File
+      # 2) Now run the Python script to generate new changes
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate RSS Feed
+        run: |
+          python scripts/custom_rss_feed.py
+
+      # 3) Commit & push changes
+      - name: Add & Commit changes
         run: |
           git add custom_quick_transmigration_feed.xml
-
-      # Step 8: Check if there are changes to commit
-      - name: Check for Changes
-        id: git-check
-        run: |
-          if git diff --cached --quiet; then
-            echo "changed=false" >> $GITHUB_ENV
-          else
-            echo "changed=true" >> $GITHUB_ENV
+          if ! git diff --cached --quiet; then
+            git commit -m "Automated RSS feed update on $(date)"
           fi
 
-      # Step 9: Commit and Push if Changed
-      - name: Commit and Push if Changed
-        if: env.changed == 'true'
+      - name: Push changes
         run: |
-          git commit -m "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
           git push origin main
