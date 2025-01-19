@@ -48,11 +48,12 @@ jobs:
         run: python scripts/custom_rss_feed.py
 
       # 6) Commit and Push changes, if any
-      - name: Commit and Push if Changed
-        run: |
-          git add custom_quick_transmigration_feed.xml
-          if ! git diff --cached --quiet; then
-            git commit -m "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
-            git push origin main
-          else
-            echo "No changes found. Nothing to commit."
+- name: Commit and Push if Changed
+  run: |
+    git add custom_quick_transmigration_feed.xml
+    if ! git diff --cached --quiet; then
+      git commit -m "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
+      git push origin main
+    else
+      echo "No changes found. Nothing to commit."
+    fi
