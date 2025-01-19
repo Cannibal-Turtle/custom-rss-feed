@@ -1,58 +1,75 @@
+# .github/workflows/update_rss_feed.yml
+
 name: Update RSS Feed
 
-# Trigger the workflow on a schedule and allow manual triggering
+permissions:
+  contents: write  # Grants write access to repository contents
+
 on:
   schedule:
     - cron: '5 16 * * *'  # Runs daily at 16:05 UTC
   workflow_dispatch:       # Allows manual trigger
 
-# Grant the workflow permission to read and write repository contents
-permissions:
-  contents: write
-
 jobs:
-  update-rss:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository on the 'main' branch with full history
+      # Step 1: Checkout the repository with full history
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
-          ref: main
+          persist-credentials: false  # Disable default token usage
+          fetch-depth: 0              # Fetches the entire history
 
-      # Step 2: Configure Git with a user identity
+      # Step 2: Configure Git
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      # Step 3: Set up Python 3.9
+      # Step 3: Pull latest changes with rebase
+      - name: Pull Latest Changes with Rebase
+        run: |
+          git pull --rebase origin main
+
+      # Step 4: Set up Python 3.9
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # Step 4: Install Python dependencies
+      # Step 5: Install dependencies
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 5: Run the RSS feed generation script
+      # Step 6: Run the Python script to generate the RSS feed
       - name: Generate RSS Feed
         run: |
           python scripts/custom_rss_feed.py  # Ensure this path is correct
 
-      # Step 6: Commit and Push changes if the XML file has been updated
-      - name: Commit and Push if Changed
+      # Step 7: Add the updated XML file
+      - name: Add RSS Feed File
         run: |
           git add custom_quick_transmigration_feed.xml
-          if ! git diff --cached --quiet; then
-            git commit -m "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
-            git push origin main
+
+      # Step 8: Check if there are changes to commit
+      - name: Check for Changes
+        id: git-check
+        run: |
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_ENV
           else
-            echo "No changes found. Nothing to commit."
+            echo "changed=true" >> $GITHUB_ENV
           fi
+
+      # Step 9: Commit and Push if Changed
+      - name: Commit and Push if Changed
+        if: env.changed == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git commit -m "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
+          git push https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git main
