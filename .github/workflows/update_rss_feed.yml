@@ -20,36 +20,42 @@ jobs:
           ref: main
           fetch-depth: 0  # Fetch all history for all branches and tags
 
-      # Step 2: Set up Python 3.9
+      # Step 2: Configure Git with a user identity
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      # Step 3: Set up Python 3.9
       - name: Set up Python 3.9
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # Step 3: Install Python dependencies
+      # Step 4: Install Python dependencies
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Step 4: Run the RSS feed generation script
+      # Step 5: Run the RSS feed generation script
       - name: Generate RSS Feed
         run: |
           python scripts/custom_rss_feed.py  # Ensure this path is correct
 
-      # Step 5: Prepare deploy directory
-      - name: Prepare Deploy Directory
+      # Step 6: Ensure .nojekyll exists to prevent Jekyll processing
+      - name: Add .nojekyll
         run: |
-          mkdir deploy
-          cp custom_quick_transmigration_feed.xml deploy/
-          echo "" > deploy/.nojekyll  # Prevent Jekyll from processing the XML
+          echo "" > .nojekyll
+          git add .nojekyll
 
-      # Step 6: Deploy to GitHub Pages using peaceiris/actions-gh-pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./deploy
-          destination_branch: gh-pages
-          force: true  # Force push to overwrite gh-pages branch
-          commit_message: "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
+      # Step 7: Commit and Push changes if the XML file has been updated
+      - name: Commit and Push if Changed
+        run: |
+          git add custom_quick_transmigration_feed.xml
+          if ! git diff --cached --quiet; then
+            git commit -m "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
+            git push origin main  # Push directly to main branch
+          else
+            echo "No changes found. Nothing to commit."
+          fi
