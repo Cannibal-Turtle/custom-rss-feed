@@ -51,4 +51,5 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./deploy
           destination_branch: gh-pages
+          force: true  # Force push to overwrite gh-pages branch
           commit_message: "Automated RSS feed update on $(date) [${GITHUB_SHA}]"
