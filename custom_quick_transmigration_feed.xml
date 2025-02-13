@@ -4,9 +4,17 @@
     <title>TVITPA Feed</title>
     <link>https://cannibal-turtle.github.io/custom-rss-feed/custom_quick_transmigration_feed.xml</link>
     <description>A customized RSS feed with separated title, chapter number, and arc title.</description>
-    <lastBuildDate>Wed, 12 Feb 2025 16:41:59 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 13 Feb 2025 16:44:38 GMT</lastBuildDate>
     <generator>PyRSS2Gen-1.1.0</generator>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
+    <item>
+      <title>Quick Transmigration: The Villain Is Too Pampered and Alluring</title>
+      <link>https://dragonholic.com/novel/quick-transmigration-the-villain-is-too-pampered-and-alluring/chapter-186/</link>
+      <description>Chapter 186</description>
+      <category>The Village Girl Supporting Role Will Not Be a Cannon Fodder 010</category>
+      <guid isPermaLink="false">5329</guid>
+      <pubDate>Thu, 13 Feb 2025 16:00:00 GMT</pubDate>
+    </item>
     <item>
       <title>Quick Transmigration: The Villain Is Too Pampered and Alluring</title>
       <link>https://dragonholic.com/novel/quick-transmigration-the-villain-is-too-pampered-and-alluring/chapter-185/</link>
@@ -246,14 +254,6 @@
       <category>The Disfigured Girlfriend Will Not Be a Cannon Fodder 017</category>
       <guid isPermaLink="false">5180</guid>
       <pubDate>Tue, 14 Jan 2025 16:00:00 GMT</pubDate>
-    </item>
-    <item>
-      <title>Quick Transmigration: The Villain Is Too Pampered and Alluring</title>
-      <link>https://dragonholic.com/novel/quick-transmigration-the-villain-is-too-pampered-and-alluring/chapter-155/</link>
-      <description>Chapter 155</description>
-      <category>The Disfigured Girlfriend Will Not Be a Cannon Fodder 016</category>
-      <guid isPermaLink="false">5179</guid>
-      <pubDate>Mon, 13 Jan 2025 16:00:00 GMT</pubDate>
     </item>
   </channel>
 </rss>
